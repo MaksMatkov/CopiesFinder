@@ -19,28 +19,41 @@ namespace Task1
         static void Main(string[] args)
         {
 
-
-            Start2();
+            ////run this
+            ///
+            try
+            {
+                Console.Write("Input path: ");
+                string input = Console.ReadLine();
+                if (String.IsNullOrWhiteSpace(input))
+                {
+                    Start2();
+                }
+                else
+                    Start2(input);
+            }
+            catch
+            {
+                Console.WriteLine("Invalid directory");
+            }
+            
+           // Start2();
             return;
 
-            Task thread = Task.Factory.StartNew(() => {
-                while(!IsDone) { }
-                Environment.Exit(0);
-            });
+            //Task thread = Task.Factory.StartNew(() => {
+            //    while(!IsDone) { }
+            //    Environment.Exit(0);
+            //});
 
 
-            Console.Write("Input path: ");
-            string input = Console.ReadLine();
-            if (String.IsNullOrWhiteSpace(input))
-            {
-                Start();
-            }
-            else
-                Start(input);
-
-
-
-
+            //Console.Write("Input path: ");
+            //string input = Console.ReadLine();
+            //if (String.IsNullOrWhiteSpace(input))
+            //{
+            //    Start();
+            //}
+            //else
+            //    Start(input);
 
         }
 
