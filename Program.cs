@@ -13,6 +13,7 @@ namespace Task1
 {
     class Program
     {
+
         public static int MaxTaskCount = 4;
 
         static void Main(string[] args)
