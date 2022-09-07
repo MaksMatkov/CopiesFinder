@@ -132,16 +132,35 @@ namespace Task1
                     {
                         try
                         {
-                            var fG = g.GroupBy(el => BitConverter.ToString(File.ReadAllBytes(el.FullName))).ToList();
-
-                            fG.ForEach(g2 =>
+                            try
                             {
-                                if (g2.Count() > 1)
+                                var fG = g.GroupBy(el => BitConverter.ToString(File.ReadAllBytes(el.FullName))).ToList();
+
+                                fG.ForEach(g2 =>
                                 {
-                                    Console.ForegroundColor = ConsoleColor.Green;
-                                    Console.WriteLine($"File Name:  {g2.First().Name} --> {g2.Count() - 1} Copies");
-                                }
-                            });
+                                    if (g2.Count() > 1)
+                                    {
+                                        Console.ForegroundColor = ConsoleColor.Green;
+                                        Console.WriteLine($"File Name:  {g2.First().Name} --> {g2.Count() - 1} Copies");
+                                    }
+                                });
+                            }
+                            catch
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine($"!!!So big file: {(g != null && g.Count() > 0 ? g.FirstOrDefault().FullName : "No File")} -- Try use .ToInt64");
+
+                                var fG = g.GroupBy(el => BitConverter.ToInt64(File.ReadAllBytes(el.FullName))).ToList();
+
+                                fG.ForEach(g2 =>
+                                {
+                                    if (g2.Count() > 1)
+                                    {
+                                        Console.ForegroundColor = ConsoleColor.Green;
+                                        Console.WriteLine($"File Name:  {g2.First().Name} --> {g2.Count() - 1} Copies");
+                                    }
+                                });
+                            }
                         }
                         catch
                         {
