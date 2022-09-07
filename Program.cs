@@ -101,7 +101,7 @@ namespace Task1
         /// test 2
         /// </summary>
         /// <param name="startFolder"></param>
-        static void Start2(string startFolder = @"F:\Фото")
+        static void Start2(string startFolder = @"F:\SteamLibrary")
         {
             System.IO.DirectoryInfo dir = new System.IO.DirectoryInfo(startFolder);
             IEnumerable<System.IO.FileInfo> fileList = dir.GetFiles("*.*", System.IO.SearchOption.AllDirectories).ToList();
@@ -134,8 +134,11 @@ namespace Task1
 
                         fG.ForEach(g2 =>
                         {
-                            Console.ForegroundColor = ConsoleColor.Green;
-                            Console.WriteLine($"--Original File {g2.First().FullName} --- {g2.Count() - 1} Copies");
+                            if(g2.Count() > 1)
+                            {
+                                Console.ForegroundColor = ConsoleColor.Green;
+                                Console.WriteLine($"--Original File {g2.First().FullName} --- {g2.Count() - 1} Copies");
+                            }
                         });
                     });
 
