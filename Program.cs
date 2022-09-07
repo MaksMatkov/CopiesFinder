@@ -13,95 +13,32 @@ namespace Task1
 {
     class Program
     {
-        public List<CompareItem> compareItems = new List<CompareItem>();
-        public static bool IsDone = false;
-        
+        public static int MaxTaskCount = 4;
+
         static void Main(string[] args)
         {
-
-            ////run this
-            ///
             try
             {
                 Console.Write("Input path: ");
                 string input = Console.ReadLine();
                 if (String.IsNullOrWhiteSpace(input))
                 {
-                    Start2();
+                    Start();
                 }
                 else
-                    Start2(input);
+                    Start(input);
             }
             catch
             {
                 Console.WriteLine("Invalid directory");
             }
-            
-           // Start2();
-            return;
-
-            //Task thread = Task.Factory.StartNew(() => {
-            //    while(!IsDone) { }
-            //    Environment.Exit(0);
-            //});
-
-
-            //Console.Write("Input path: ");
-            //string input = Console.ReadLine();
-            //if (String.IsNullOrWhiteSpace(input))
-            //{
-            //    Start();
-            //}
-            //else
-            //    Start(input);
-
         }
-
-        
-
-        static async void Start(string startFolder = @"F:\test")
-        {  
-            System.IO.DirectoryInfo dir = new System.IO.DirectoryInfo(startFolder);
-            IEnumerable<System.IO.FileInfo> fileList = dir.GetFiles("*.*", System.IO.SearchOption.AllDirectories).ToList();
-
-          //  fileList = fileList.Take(2000);
-            Console.WriteLine("Files Count: " + fileList.Count());
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-
-            var task = fileList.AsParallel().Select(async el =>
-            {
-
-                var hash = await GetHash(el.FullName);
-
-
-                return new CompareItem() { Hash = hash, Path = el.FullName };
-            });
-            var result = await Task.WhenAll(task);
-
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"Getting Hash --- DONE -- {sw.Elapsed}" );
-
-            var resultL = result.ToList().GroupBy(el => el.Hash).ToList();
-            Console.WriteLine($"Grouping Copies --- DONE -- {sw.Elapsed}");
-
-
-            Print(resultL);
-
-            sw.Stop();
-
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine();
-            Console.WriteLine("Ex-Time: " + sw.Elapsed);
-            IsDone = true;
-        }
-
 
         /// <summary>
-        /// test 2
+        /// Get Files Copies Using multi-tasks
         /// </summary>
-        /// <param name="startFolder"></param>
-        static void Start2(string startFolder = @"F:\test")
+        /// <param name="startFolder"> folder with files </param>
+        static void Start(string startFolder = @"F:\test")
         {
             System.IO.DirectoryInfo dir = new System.IO.DirectoryInfo(startFolder);
             IEnumerable<System.IO.FileInfo> fileList = dir.GetFiles("*.*", System.IO.SearchOption.AllDirectories).ToList();
@@ -111,24 +48,23 @@ namespace Task1
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
+            // getting groups with same size
             var result = fileList.AsParallel().GroupBy(el => el.Length).ToList();
-            //  var result = await Task.WhenAll(task);
-
-
             var tasks = new List<Task>();
 
             result.ForEach(g =>
             {
-
+                //if one file in group it haven`t copies 
                 if (g.Count() > 1)
                 {
-
-                    if (tasks.Count() > 4)
+                    //Check if task list is full
+                    if (tasks.Count() > MaxTaskCount)
                     {
                         Task.WaitAny(tasks.ToArray());
                     }
 
-                    var ntasks = Task.Factory.StartNew(() =>
+                    //Add new async Task
+                    var newTasks = Task.Factory.StartNew(() =>
                     {
                         try
                         {
@@ -147,6 +83,7 @@ namespace Task1
                             }
                             catch
                             {
+                                ///file can be so big and string of bites is out of range So I added converting to Int64
                                 Console.ForegroundColor = ConsoleColor.Red;
                                 Console.WriteLine($"!!!So big file: {(g != null && g.Count() > 0 ? g.FirstOrDefault().FullName : "No File")} -- Try use .ToInt64");
 
@@ -169,68 +106,18 @@ namespace Task1
                         }
                     });
 
-                    tasks.Add(ntasks);
+                    //Add new Task to list
+                    tasks.Add(newTasks);
                 }
             });
 
-            //Console.ForegroundColor = ConsoleColor.Green;
-            //Console.WriteLine($"Getting Hash --- DONE -- {sw.Elapsed}");
-
-            //var resultL = result.ToList().GroupBy(el => GetHash(el.Hash)).ToList();
-            //Console.WriteLine($"Grouping Copies --- DONE -- {sw.Elapsed}");
-
-
-            // Print(resultL);
-
+            //Wait when all task finished
             Task.WaitAll(tasks.ToArray());
-
             sw.Stop();
 
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine();
             Console.WriteLine("Ex-Time: " + sw.Elapsed);
-           // IsDone = true;
         }
-
-
-        public static void Print(List<IGrouping<string, CompareItem>> list)
-        {
-            list.ForEach(g =>
-            {
-                var groupe = g.ToList();
-                var head = groupe.FirstOrDefault();
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"--Original File {head.Path}");
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"--- {groupe.Count - 1} Copies");
-
-            });
-        }
-
-
-
-        public static async Task<string> GetHash(string path)
-        {
-            return BitConverter.ToString(File.ReadAllBytes(path));
-        }
-
-    }
-
-
-
-    class CompareItem
-    {
-      //  public Guid ID { get; set; }
-        public string Path { get; set; }
-        public string Hash { get; set; }
-        public bool IsMain { get; set; }
-    }
-
-    class CompareItem1
-    {
-      // public Guid ID { get; set; }
-        public string Path { get; set; }
-        //public string Hash { get; set; }
-        public bool Touched { get; set; }
     }
 }
