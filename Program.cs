@@ -70,7 +70,8 @@ namespace Task1
                         {
                             try
                             {
-                                var fG = g.GroupBy(el => BitConverter.ToString(File.ReadAllBytes(el.FullName))).ToList();
+                               // var fG = g.GroupBy(el => BitConverter.ToString(File.ReadAllBytes(el.FullName))).ToList();
+                                var fG = g.GroupBy(el => CalculateMD5(el.FullName)).ToList();
 
                                 fG.ForEach(g2 =>
                                 {
@@ -118,6 +119,18 @@ namespace Task1
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine();
             Console.WriteLine("Ex-Time: " + sw.Elapsed);
+        }
+
+        public static string CalculateMD5(string filename)
+        {
+            using (var md5 = MD5.Create())
+            {
+                using (var stream = File.OpenRead(filename))
+                {
+                    var hash = md5.ComputeHash(stream);
+                    return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                }
+            }
         }
     }
 }
