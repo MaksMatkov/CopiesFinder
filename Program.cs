@@ -32,13 +32,15 @@ namespace Task1
             {
                 Console.WriteLine("Invalid directory");
             }
+
+            Console.ReadLine();
         }
 
         /// <summary>
         /// Get Files Copies Using multi-tasks
         /// </summary>
         /// <param name="startFolder"> folder with files </param>
-        static void Start(string startFolder = @"F:\test")
+        static void Start(string startFolder = @"F:\Desctop")
         {
             System.IO.DirectoryInfo dir = new System.IO.DirectoryInfo(startFolder);
             IEnumerable<System.IO.FileInfo> fileList = dir.GetFiles("*.*", System.IO.SearchOption.AllDirectories).ToList();
