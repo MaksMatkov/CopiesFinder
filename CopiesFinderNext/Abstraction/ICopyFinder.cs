@@ -5,11 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CopiesFinder.Abstraction
+namespace CopiesFinderNext.Abstraction
 {
     interface ICopyFinder
     {
-        public bool Find();
+        public bool Find(ProgressBar ProgresBar = null);
         public string GetResult();
         public void PrintResult();
         public int GetFilesCount();

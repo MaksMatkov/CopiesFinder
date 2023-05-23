@@ -1,4 +1,5 @@
-﻿using CopiesFinder.Abstraction;
+﻿using CopiesFinderNext.Abstraction;
+using CopiesFinderNext.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,20 +9,20 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CopiesFinder.Service
+namespace CopiesFinderNext.Service
 {
     public class CopyFinder : ICopyFinder
     {
         private string _path;
         private int _maxTaskCount;
 
-        private IEnumerable<System.IO.FileInfo> _filaeList;
+        private IEnumerable<System.IO.FileInfo> _filesList;
             
         private int filesCount = 0;
         
         private TimeSpan executeTime;
-
-        private List<string> _output = new List<string>();
+        
+        public List<CopyModel> _output = new List<CopyModel>();
 
         public CopyFinder(string path, int maxTaskCount = 3)
         {
@@ -29,19 +30,23 @@ namespace CopiesFinder.Service
             _maxTaskCount = maxTaskCount;
         }
 
-        public bool Find()
+        public bool Find(ProgressBar ProgresBar = null)
         {
             try
             {
                 Stopwatch sw = new Stopwatch();
                 System.IO.DirectoryInfo dir = new System.IO.DirectoryInfo(_path);
-                _filaeList = dir.GetFiles("*.*", System.IO.SearchOption.AllDirectories);
-                filesCount = _filaeList.Count();
+                _filesList = dir.GetFiles("*.*", System.IO.SearchOption.AllDirectories);
+                filesCount = _filesList.Count();
                 sw.Start();
                 Console.WriteLine("Files count: " + filesCount);
                 Console.WriteLine("Processing...");
 
-                var result = _filaeList.AsParallel().GroupBy(el => el.Length).ToList();
+                ProgresBar.Minimum = 0; 
+                ProgresBar.Value = 0;
+                ProgresBar.Maximum = filesCount;
+
+                var result = _filesList.AsParallel().GroupBy(el => el.Length).ToList();
                 var tasks = new List<Task>();
 
                 result.ForEach(g =>
@@ -60,11 +65,13 @@ namespace CopiesFinder.Service
                         {
                             try
                             {
+                                var iterationGuid = Guid.NewGuid();
                                 try
                                 {
                                     var fG = g.GroupBy(el => CalculateMD5(el.FullName)).ToList();
 
-                                    _output.AddRange(fG.Where(g2 => g2.Count() > 1).Select(el => ParseString(el.ToList())));
+                                    _output.AddRange(fG.Where(g2 => g2.Count() > 1).SelectMany(el => el.ToList()).Select(el => new CopyModel() { Name = el.Name, Path = el.FullName, Hash = iterationGuid.ToString() }));
+                                    ProgresBar.Value += fG.Sum(el => el.Count());
                                 }
                                 catch
                                 {
@@ -74,7 +81,8 @@ namespace CopiesFinder.Service
 
                                     var fG = g.GroupBy(el => BitConverter.ToInt64(File.ReadAllBytes(el.FullName))).ToList();
 
-                                    _output.AddRange(fG.Where(g2 => g2.Count() > 1).Select(el => ParseString(el.ToList())));
+                                    _output.AddRange(fG.Where(g2 => g2.Count() > 1).SelectMany(el => el.ToList()).Select(el => new CopyModel() { Name = el.Name, Path = el.FullName, Hash = iterationGuid.ToString() }));
+                                    ProgresBar.Value += fG.Sum(el => el.Count());
                                 }
                             }
                             catch
@@ -86,12 +94,14 @@ namespace CopiesFinder.Service
 
                         //Add new Task to list
                         tasks.Add(newTasks);
-                    }
+                    } else ProgresBar.Value++;
                 });
 
                 Task.WaitAll(tasks.ToArray());
+                lock (_output) 
                 sw.Stop();
                 executeTime = sw.Elapsed;
+                ProgresBar.Value = ProgresBar.Maximum;
             }
             catch
             {
